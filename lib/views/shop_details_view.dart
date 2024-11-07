@@ -1,215 +1,237 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:p_2_find_shop/controllers/shop_controller.dart';
+import 'package:p_2_find_shop/models/product.dart';
+import 'package:p_2_find_shop/models/shop.dart';
 import 'package:p_2_find_shop/theme/font_size.dart';
-import 'package:p_2_find_shop/views/item_form_view.dart';
-
-import '../controllers/shop_controller.dart';
-import 'shop_form_view.dart'; // Assume ShopFormView is the page for adding/editing shops
+import 'package:p_2_find_shop/views/add_product_view.dart';
 
 class ShopDetailsView extends StatelessWidget {
-  final int shopId;
-  final ShopController shopController = Get.find();
+  final Shop shop;
 
-  ShopDetailsView({super.key, required this.shopId});
+  const ShopDetailsView({super.key, required this.shop});
 
   @override
   Widget build(BuildContext context) {
+    final ShopController shopController = Get.put(ShopController());
+    shopController.filteredProducts.value = shop.products;
+
     return Scaffold(
-      appBar: AppBar(
-        elevation: 4,
-        backgroundColor: Colors.blue,
-        title: Obx(() {
-          final shop = shopController.getShopById(shopId);
-          return Text(
-            shop.shopName,
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          );
-        }),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.edit, color: Colors.white),
-            onPressed: () {
-              Get.to(() => ShopFormView(shopId: shopId));
-            },
-          ),
-        ],
-      ),
+      appBar: _buildAppBar(context, shopController),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Obx(() {
-          final shop = shopController.getShopById(shopId);
-          final items = shopController.getItemsByShopId(shopId);
-          final hours = shopController.getShopHoursByShopId(shopId);
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            _buildShopDetailsCard(context),
+            const SizedBox(height: 24),
+            _buildProductsSectionTitle(context),
+            const SizedBox(height: 24),
+            _buildSearchBar(shopController, context),
+            const SizedBox(height: 16),
+            _buildProductList(shopController, context),
+          ],
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          // Navigate to AddProductView, passing the shop as argument
+          Get.to(() => AddProductView(shop: shop));
+        },
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
 
-          return ListView(
-            children: [
-              // Shop Details Card
-              Card(
-                elevation: 8,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                margin: const EdgeInsets.symmetric(vertical: 10),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          const Icon(Icons.storefront,
-                              color: Colors.blue, size: 40),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Text(
-                              shop.shopName,
-                              style: const TextStyle(
-                                  fontSize: 22, fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          const Icon(Icons.location_on,
-                              color: Colors.blue, size: 24),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text("Address: ${shop.address}",
-                                style: const TextStyle(fontSize: 16)),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          const Icon(Icons.phone, color: Colors.blue, size: 24),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text("Phone: ${shop.phoneNumber}",
-                                style: const TextStyle(fontSize: 16)),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+  // AppBar with Reload Button
+  AppBar _buildAppBar(BuildContext context, ShopController shopController) {
+    return AppBar(
+      title:
+          Text(shop.shopName, style: Theme.of(context).textTheme.headlineLarge),
+      centerTitle: true,
+      backgroundColor: Theme.of(context).colorScheme.secondary,
+      elevation: 0,
+    );
+  }
 
-              const SizedBox(height: 16),
-
-              // Available Items Section
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text(
-                    "Available Items:",
-                    style: TextStyle(
-                        fontSize: FontSize.subtitle,
-                        fontWeight: FontWeight.bold),
-                  ),
-                  const Spacer(),
-                  ElevatedButton(
-                    onPressed: () {
-                      Get.to(() => ItemFormView(shopId: shopId));
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 12, horizontal: 20),
-                      textStyle: const TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.bold),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
+  // Shop Details Card
+  Widget _buildShopDetailsCard(BuildContext context) {
+    return Card(
+      elevation: 8,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Text(
+                shop.shopName,
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.primary,
                     ),
-                    child: const Text("Add New Item"),
-                  ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            _buildShopDetailRow(context, 'Address: ${shop.address}',
+                icon: Icons.location_on,
+                iconColor: Theme.of(context).colorScheme.secondary),
+            const SizedBox(height: 12),
+            _buildShopDetailRow(context, 'Phone: ${shop.phoneNumber}',
+                icon: Icons.phone,
+                iconColor: Theme.of(context).colorScheme.primary),
+            const SizedBox(height: 12),
+            _buildShopDetailRow(
+                context, 'Categories: ${shop.categories.join(", ")}',
+                icon: Icons.category,
+                iconColor: Theme.of(context).colorScheme.secondary),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Shop Detail Row
+  Widget _buildShopDetailRow(BuildContext context, String text,
+      {IconData? icon, Color? iconColor}) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (icon != null)
+          Icon(icon,
+              size: 20,
+              color: iconColor ?? Theme.of(context).colorScheme.onSurface),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            text,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w400,
+                  fontSize: FontSize.body,
+                ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Search Bar
+  Widget _buildSearchBar(ShopController shopController, BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: TextField(
+            onChanged: (value) =>
+                shopController.filterProducts(value, shop.shopId),
+            decoration: InputDecoration(
+              hintText: 'Search products...',
+              prefixIcon:
+                  Icon(Icons.search, color: Theme.of(context).iconTheme.color),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(30),
+                borderSide: BorderSide.none,
+              ),
+              suffixIcon: IconButton(
+                icon:
+                    Icon(Icons.clear, color: Theme.of(context).iconTheme.color),
+                onPressed: () => shopController.clearFilter(shop.shopId),
+              ),
+              filled: true,
+              fillColor: Theme.of(context).inputDecorationTheme.fillColor,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Products Section Title
+  Widget _buildProductsSectionTitle(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Text(
+        'Products Available',
+        style: Theme.of(context).textTheme.headlineMedium,
+      ),
+    );
+  }
+
+  // Product List
+  Widget _buildProductList(
+      ShopController shopController, BuildContext context) {
+    return Obx(() {
+      // Check if loading, show a circular progress indicator if true
+      if (shopController.isLoading.value) {
+        return Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(
+                Theme.of(context).colorScheme.primary),
+          ),
+        );
+      }
+
+      final filteredProducts = shopController.filteredProducts;
+      if (filteredProducts.isEmpty) {
+        return Center(
+          child: Text(
+            'No products available in this shop.',
+            style: TextStyle(color: Colors.grey[600], fontSize: FontSize.body),
+          ),
+        );
+      }
+
+      return Expanded(
+        child: ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: filteredProducts.length,
+          itemBuilder: (context, index) {
+            final product = filteredProducts[index];
+            return _buildProductCard(product, context);
+          },
+        ),
+      );
+    });
+  }
+
+  // Product Card
+  Widget _buildProductCard(Product product, BuildContext context) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      margin: const EdgeInsets.only(bottom: 16.0),
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Row(
+          children: [
+            Image.file(
+              File(product.imageUrl),
+              height: 60,
+              width: 60,
+              fit: BoxFit.cover,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(product.productName,
+                      style: Theme.of(context).textTheme.bodyMedium),
+                  Text('₹ ${product.price}',
+                      style: Theme.of(context).textTheme.bodySmall),
                 ],
               ),
-              if (items.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 8),
-                  child: Text("No items available.",
-                      style: TextStyle(fontSize: 16, color: Colors.grey)),
-                ),
-              ...items.map(
-                (item) => Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: Card(
-                    elevation: 4,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 8),
-                      leading: const CircleAvatar(
-                        backgroundColor: Colors.blue,
-                        child: Icon(Icons.shopping_cart, color: Colors.white),
-                      ),
-                      title: Text(
-                        "${item.itemName} (${item.itemCategory})",
-                        style: const TextStyle(fontSize: 16),
-                      ),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.edit, color: Colors.blue),
-                            onPressed: () {
-                              Get.to(() => ItemFormView(
-                                  itemId: item.itemId, shopId: shopId));
-                            },
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.delete, color: Colors.red),
-                            onPressed: () {
-                              shopController.deleteItem(item);
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              // Opening Hours Section
-              const Text(
-                "Opening Hours:",
-                style: TextStyle(
-                    fontSize: FontSize.subtitle, fontWeight: FontWeight.bold),
-              ),
-              if (hours.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 8),
-                  child: Text("No hours set.",
-                      style: TextStyle(fontSize: 16, color: Colors.grey)),
-                ),
-              ...hours.map(
-                (hour) => Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: Card(
-                    elevation: 4,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.all(16),
-                      title: Text(
-                        "${hour.dayOfWeek}: ${hour.openTime} - ${hour.closeTime}",
-                        style: const TextStyle(fontSize: 16),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          );
-        }),
+            ),
+          ],
+        ),
       ),
     );
   }

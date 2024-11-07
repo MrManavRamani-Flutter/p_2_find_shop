@@ -1,218 +1,166 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:p_2_find_shop/models/city.dart';
-import 'package:p_2_find_shop/views/shop_list_view.dart';
+import 'package:p_2_find_shop/views/add_shop_view.dart';
+import 'package:p_2_find_shop/views/shop_details_view.dart';
 
 import '../controllers/shop_controller.dart';
+import '../controllers/theme_controller.dart';
+import '../theme/font_size.dart';
 
 class HomeView extends StatelessWidget {
   final ShopController shopController = Get.find();
+  final ThemeController themeController = Get.find();
 
   HomeView({super.key});
 
   @override
   Widget build(BuildContext context) {
+    TextEditingController searchController = TextEditingController();
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Find Shop"),
-        centerTitle: true,
+        title: Text(
+          'Digital Jasdan',
+          style: Theme.of(context).textTheme.headlineLarge,
+        ),
+        actions: [
+          // Theme switch button
+          IconButton(
+            icon: Icon(
+              themeController.isDarkMode.value
+                  ? Icons.dark_mode
+                  : Icons.light_mode,
+            ),
+            onPressed: themeController.toggleTheme,
+          ),
+        ],
+        backgroundColor: Theme.of(context).colorScheme.secondary,
         elevation: 0,
       ),
       body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            // Search bar for filtering cities
+            // Search field
             TextField(
-              onChanged: (value) => shopController.searchCity(value),
+              controller: searchController,
               decoration: InputDecoration(
-                hintText: "Search city...",
-                prefixIcon: Icon(Icons.search, color: Colors.grey[700]),
-                filled: true,
-                fillColor: Colors.grey[200],
+                hintText: 'Search by Shop Name or Category',
+                prefixIcon: Icon(Icons.search,
+                    color: Theme.of(context).iconTheme.color),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(30),
                   borderSide: BorderSide.none,
                 ),
+                suffixIcon: IconButton(
+                  icon: Icon(Icons.clear,
+                      color: Theme.of(context).iconTheme.color),
+                  onPressed: () {
+                    searchController.clear();
+                    shopController.filterShops('');
+                  },
+                ),
+                filled: true,
+                fillColor: Theme.of(context).inputDecorationTheme.fillColor,
               ),
+              onChanged: (value) {
+                shopController.filterShops(value);
+              },
             ),
             const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () {
+                Get.to(() => AddShopView()); // Navigate to AddShopView
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context)
+                    .colorScheme
+                    .surface, // Use the secondary color from the current theme
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30)),
+                shadowColor: Theme.of(context).colorScheme.secondary,
+                textStyle: const TextStyle(
+                  fontSize: FontSize
+                      .button, // You can use your FontSize constant here
+                  color: Colors.white, // White text color
+                ),
+              ),
+              child: Text(
+                'Add New Shop',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ),
 
-            // List of cities
+            const SizedBox(height: 16),
             Expanded(
               child: Obx(() {
-                if (shopController.filteredCities.isEmpty) {
+                if (shopController.filteredShops.isEmpty) {
                   return Center(
                     child: Text(
-                      "No cities found",
-                      style: TextStyle(fontSize: 18, color: Colors.grey[600]),
+                      'No shops found',
+                      style: Theme.of(context).textTheme.bodyMedium,
                     ),
                   );
-                }
-
-                return ListView.builder(
-                  itemCount: shopController.filteredCities.length,
-                  itemBuilder: (context, index) {
-                    final city = shopController.filteredCities[index];
-
-                    return GestureDetector(
-                      onTap: () {
-                        Get.to(() => ShopListView(cityId: city.cityId));
-                      },
-                      child: Card(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        elevation: 2,
-                        margin: const EdgeInsets.symmetric(vertical: 8.0),
-                        child: ListTile(
-                          contentPadding: const EdgeInsets.symmetric(
-                            vertical: 12,
-                            horizontal: 16,
+                } else {
+                  return ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: shopController.filteredShops.length,
+                    itemBuilder: (context, index) {
+                      final shop = shopController.filteredShops[index];
+                      return GestureDetector(
+                        onTap: () {
+                          // Navigate to ShopDetailsView and pass the selected shop
+                          Get.to(() => ShopDetailsView(shop: shop));
+                        },
+                        child: Card(
+                          margin: const EdgeInsets.symmetric(vertical: 8),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15),
                           ),
-                          leading: Icon(
-                            Icons.location_city,
-                            color: Colors.blue[700],
-                            size: 30,
-                          ),
-                          title: Text(
-                            city.cityName,
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w500,
+                          elevation: 3,
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  shop.shopName,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .headlineMedium
+                                      ?.copyWith(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .primary,
+                                      ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Categories: ${shop.categories.join(", ")}',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodyMedium
+                                      ?.copyWith(
+                                        color: Theme.of(context)
+                                            .textTheme
+                                            .bodyMedium
+                                            ?.color
+                                            ?.withOpacity(0.7),
+                                      ),
+                                ),
+                              ],
                             ),
                           ),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              // Edit button
-                              IconButton(
-                                icon: const Icon(Icons.edit),
-                                onPressed: () {
-                                  _showEditCityDialog(context, city);
-                                },
-                              ),
-                              Icon(
-                                Icons.arrow_forward_ios,
-                                color: Colors.grey[600],
-                                size: 20,
-                              ),
-                            ],
-                          ),
                         ),
-                      ),
-                    );
-                  },
-                );
+                      );
+                    },
+                  );
+                }
               }),
             ),
           ],
         ),
       ),
-      // Add Floating Action Button for adding a city
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          _showAddCityDialog(context);
-        },
-        backgroundColor: Colors.blue[700],
-        child: const Icon(Icons.add),
-      ),
-    );
-  }
-
-  // Function to show the Add City dialog
-  void _showAddCityDialog(BuildContext context) {
-    final TextEditingController cityNameController = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text("Add New City"),
-          content: TextField(
-            controller: cityNameController,
-            decoration: const InputDecoration(
-              hintText: "Enter city name",
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Get.back();
-              },
-              child: const Text("Cancel"),
-            ),
-            TextButton(
-              onPressed: () {
-                String cityName = cityNameController.text.trim();
-                if (cityName.isNotEmpty) {
-                  // Add the new city to the shopController's list
-                  shopController.cities.add(City(
-                    cityId: shopController.cities.length + 1,
-                    cityName: cityName,
-                  ));
-                  shopController.filteredCities.add(City(
-                    cityId: shopController.cities.length,
-                    cityName: cityName,
-                  ));
-
-                  // Close the dialog
-                  Get.back();
-                } else {
-                  // Show error message if no city name entered
-                  Get.snackbar("Error", "City name cannot be empty");
-                }
-              },
-              child: const Text("Add"),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-// Function to show the Edit City dialog
-  void _showEditCityDialog(BuildContext context, City city) {
-    final TextEditingController cityNameController =
-        TextEditingController(text: city.cityName);
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text("Edit City"),
-          content: TextField(
-            controller: cityNameController,
-            decoration: const InputDecoration(
-              hintText: "Edit city name",
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Get.back();
-              },
-              child: const Text("Cancel"),
-            ),
-            TextButton(
-              onPressed: () {
-                String newCityName = cityNameController.text.trim();
-                if (newCityName.isNotEmpty && newCityName != city.cityName) {
-                  // Update the city name using the method
-                  city.updateCityName(newCityName);
-                  shopController.filteredCities.refresh();
-                  Get.back();
-                } else {
-                  // Show error message if no name entered or name is the same
-                  Get.snackbar(
-                      "Error", "City name cannot be empty or the same");
-                }
-              },
-              child: const Text("Save"),
-            ),
-          ],
-        );
-      },
     );
   }
 }

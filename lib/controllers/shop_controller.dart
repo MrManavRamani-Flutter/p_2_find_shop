@@ -1,239 +1,101 @@
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 
-import '../models/city.dart';
-import '../models/item.dart';
+import '../models/product.dart';
 import '../models/shop.dart';
-import '../models/shop_hours.dart';
 
 class ShopController extends GetxController {
-  // Observables for managing cities, shops, items, and shop hours
-  var cities = <City>[].obs;
-  var shops = <Shop>[].obs;
-  var items = <Item>[].obs;
-  var shopHours = <ShopHours>[].obs;
-
-  // Filtered cities for search functionality
-  var filteredCities = <City>[].obs;
-
-  // Filtered shops for search functionality
-  var filteredShops = <Shop>[].obs;
+  var shopList = <Shop>[].obs; // List of all shops
+  var filteredShops = <Shop>[].obs; // Filtered list of shops
+  var filteredProducts = <Product>[].obs;
+  var isLoading = false.obs;
+  var searchQuery = ''.obs; // Search query state
+  final ImagePicker _picker = ImagePicker(); // Image picker instance
 
   @override
   void onInit() {
     super.onInit();
-    // Initialize mock data
-    _initializeMockData();
-
-    // Initially, load all cities and shops into their respective filtered lists
-    filteredCities.addAll(cities);
-    filteredShops.addAll(shops);
+    loadShops();
   }
 
-  // Method to initialize mock data for cities, shops, items, and shop hours
-  void _initializeMockData() {
-    cities.addAll([
-      City(cityId: 1, cityName: "Rajkot"), // Rajkot city added
-    ]);
-
-    shops.addAll([
-      Shop(
-        shopId: 1,
-        shopName: "Rajkot Grocers",
-        cityId: 1,
-        phoneNumber: "0281-123-4567",
-        address: "123 Rajkot Road, Rajkot",
-      ),
-      Shop(
-        shopId: 2,
-        shopName: "Tech World",
-        cityId: 1,
-        phoneNumber: "0281-234-5678",
-        address: "45 Technology Park, Rajkot",
-      ),
-      Shop(
-        shopId: 3,
-        shopName: "Fashion Hub",
-        cityId: 1,
-        phoneNumber: "0281-345-6789",
-        address: "88 Fashion Street, Rajkot",
-      ),
-      Shop(
-        shopId: 4,
-        shopName: "Super Mart Rajkot",
-        cityId: 1,
-        phoneNumber: "0281-456-7890",
-        address: "7 Main Market, Rajkot",
-      ),
-    ]);
-
-    items.addAll([
-      Item(
-          itemId: 1,
-          shopId: 1,
-          itemName: "Tomatoes",
-          itemCategory: "Vegetables"),
-      Item(itemId: 2, shopId: 1, itemName: "Rice", itemCategory: "Grains"),
-      Item(
-          itemId: 3,
-          shopId: 2,
-          itemName: "Smartphone",
-          itemCategory: "Electronics"),
-      Item(
-          itemId: 4,
-          shopId: 2,
-          itemName: "Laptop",
-          itemCategory: "Electronics"),
-      Item(itemId: 5, shopId: 3, itemName: "Shirt", itemCategory: "Apparel"),
-      Item(itemId: 6, shopId: 3, itemName: "Jeans", itemCategory: "Apparel"),
-      Item(
-          itemId: 7,
-          shopId: 4,
-          itemName: "Wheat Flour",
-          itemCategory: "Groceries"),
-      Item(
-          itemId: 8,
-          shopId: 4,
-          itemName: "Cooking Oil",
-          itemCategory: "Groceries"),
-    ]);
-
-    shopHours.addAll([
-      ShopHours(
-          hoursId: 1,
-          shopId: 1,
-          dayOfWeek: "Monday",
-          openTime: "08:00",
-          closeTime: "20:00"),
-      ShopHours(
-          hoursId: 2,
-          shopId: 1,
-          dayOfWeek: "Tuesday",
-          openTime: "08:00",
-          closeTime: "20:00"),
-      ShopHours(
-          hoursId: 3,
-          shopId: 2,
-          dayOfWeek: "Wednesday",
-          openTime: "10:00",
-          closeTime: "22:00"),
-      ShopHours(
-          hoursId: 4,
-          shopId: 3,
-          dayOfWeek: "Thursday",
-          openTime: "09:00",
-          closeTime: "21:00"),
-      ShopHours(
-          hoursId: 5,
-          shopId: 4,
-          dayOfWeek: "Friday",
-          openTime: "07:00",
-          closeTime: "20:00"),
-    ]);
+  // Load initial shop data
+  void loadShops() {
+    shopList.value = [
+      // Dummy Shop Data - Uncomment and add shop/product details here
+      // Shop(
+      //   shopId: 1,
+      //   shopName: 'Sample Shop',
+      //   address: 'Sample Address',
+      //   phoneNumber: '1234567890',
+      //   categories: ['Category1', 'Category2'],
+      //   products: [
+      //     Product(productName: 'Product 1', price: 100.0, imageUrl: 'path/to/image'),
+      //     Product(productName: 'Product 2', price: 200.0, imageUrl: 'path/to/image'),
+      //   ],
+      // ),
+    ];
+    filteredShops.value = shopList; // Initialize with full shop list
   }
 
-  // Method to filter cities based on search query
-  void searchCity(String query) {
+  // Filter shops based on search query (matching shop name or category)
+  void filterShops(String query) {
     if (query.isEmpty) {
-      filteredCities.assignAll(cities);
+      filteredShops.value = shopList;
     } else {
-      filteredCities.assignAll(
-        cities.where((city) =>
-            city.cityName.toLowerCase().contains(query.toLowerCase())),
-      );
+      filteredShops.value = shopList.where((shop) {
+        final matchesName =
+            shop.shopName.toLowerCase().contains(query.toLowerCase());
+        final matchesCategory = shop.categories.any(
+            (category) => category.toLowerCase().contains(query.toLowerCase()));
+        return matchesName || matchesCategory;
+      }).toList();
     }
   }
 
-  void searchShop(String query, int cityId) {
+  // Add a new shop and update filtered shops
+  void addShop(Shop shop) {
+    shopList.add(shop);
+    filteredShops.value = shopList;
+  }
+
+  // Filter products within a shop based on search query
+  void filterProducts(String query, int shopId) {
+    final shop = shopList.firstWhere((shop) => shop.shopId == shopId);
     if (query.isEmpty) {
-      filteredShops.assignAll(
-        shops.where((shop) => shop.cityId == cityId).toList(),
-      );
+      filteredProducts.value = shop.products;
     } else {
-      filteredShops.assignAll(
-        shops.where((shop) =>
-            shop.cityId == cityId &&
-            (shop.shopName.toLowerCase().contains(query.toLowerCase()) ||
-                shop.address.toLowerCase().contains(query.toLowerCase()))),
-      );
+      filteredProducts.value = shop.products
+          .where((product) =>
+              product.productName.toLowerCase().contains(query.toLowerCase()))
+          .toList();
     }
   }
 
-  // Retrieve shops for a given cityId
-  List<Shop> getShopsByCity(int cityId) {
-    return shops.where((shop) => shop.cityId == cityId).toList();
+  // Reset product search filters
+  void clearFilter(int shopId) {
+    searchQuery.value = '';
+    filterProducts(searchQuery.value, shopId);
   }
 
-  // Retrieve items for a given shopId
-  List<Item> getItemsByShop(int shopId) {
-    return items.where((item) => item.shopId == shopId).toList();
-  }
-
-  // Retrieve shop hours for a given shopId
-  List<ShopHours> getShopHoursByShop(int shopId) {
-    return shopHours.where((hours) => hours.shopId == shopId).toList();
-  }
-
-  // Get shop by ID
-  Shop getShopById(int shopId) {
-    return shops.firstWhere((shop) => shop.shopId == shopId);
-  }
-
-  // Get items by shop ID
-  List<Item> getItemsByShopId(int shopId) {
-    return items.where((item) => item.shopId == shopId).toList();
-  }
-
-  // Get shop hours by shop ID
-  List<ShopHours> getShopHoursByShopId(int shopId) {
-    return shopHours.where((hour) => hour.shopId == shopId).toList();
-  }
-
-  void addShop(String shopName, String address, String phoneNumber) {
-    final newShop = Shop(
-      shopId: DateTime.now().millisecondsSinceEpoch, // Unique shop ID
-      shopName: shopName,
-      address: address,
-      phoneNumber: phoneNumber, // Add this field
-      cityId: 1, // Assuming you have a default cityId
-    );
-    shops.add(newShop);
-    filteredShops.assignAll(shops); // Refresh the filtered list
-  }
-
-  // Update existing shop
-  void updateShop(int shopId, String shopName, String address) {
-    final shop = shops.firstWhere((shop) => shop.shopId == shopId);
-    shop.shopName = shopName;
-    shop.address = address;
-    filteredShops.assignAll(shops); // Refresh the filtered list
-  }
-
-  // Function to add an item
-  void addItem(int shopId, String itemName, String itemCategory) {
-    var newItem = Item(
-      itemId: items.length + 1, // simple logic to generate unique itemId
-      shopId: shopId,
-      itemName: itemName,
-      itemCategory: itemCategory,
-    );
-    items.add(newItem);
-  }
-
-  // Function to update an item
-  void updateItem(int itemId, String itemName, String itemCategory) {
-    var index = items.indexWhere((item) => item.itemId == itemId);
-    if (index != -1) {
-      items[index] = Item(
-        itemId: itemId,
-        shopId: items[index].shopId,
-        itemName: itemName,
-        itemCategory: itemCategory,
+  // Image picking for product
+  Future<void> pickImage(int shopId) async {
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      final product = Product(
+        productName: 'New Product',
+        price: 0.0,
+        imageUrl: image.path,
       );
+      addProductToShop(shopId, product);
     }
   }
 
-  // Delete item
-  void deleteItem(Item item) {
-    items.remove(item);
+  // Add a new product to a shop and update filtered products if applicable
+  void addProductToShop(int shopId, Product product) {
+    final shop = shopList.firstWhere((shop) => shop.shopId == shopId);
+    shop.products.add(product);
+    // if (filteredShops.contains(shop)) {
+    filteredProducts.value = shop.products;
+    // }
   }
 }

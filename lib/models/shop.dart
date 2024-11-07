@@ -1,19 +1,23 @@
+import 'package:p_2_find_shop/models/product.dart';
+
 class Shop {
-  final int shopId;
-  String shopName; // Keep as mutable
-  String address; // Keep as mutable
-  final String phoneNumber;
-  final int cityId;
+  int shopId;
+  String shopName;
+  String address;
+  String phoneNumber;
+  List<String> categories;
+  List<Product> products; // List of products sold by this shop
 
   Shop({
     required this.shopId,
     required this.shopName,
     required this.address,
     required this.phoneNumber,
-    required this.cityId,
+    required this.categories,
+    required this.products,
   });
 
-  // Setter methods to update properties
+  // Optionally add methods to update shop details
   void setShopName(String newName) {
     shopName = newName;
   }
