@@ -7,6 +7,7 @@ import 'package:p_2_find_shop/models/product.dart';
 import 'package:p_2_find_shop/models/shop.dart';
 import 'package:p_2_find_shop/theme/font_size.dart';
 import 'package:p_2_find_shop/views/add_product_view.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ShopDetailsView extends StatelessWidget {
   final Shop shop;
@@ -23,12 +24,110 @@ class ShopDetailsView extends StatelessWidget {
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildShopDetailsCard(context),
+            Card(
+              elevation: 4,
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Shop Details Section with Header
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Center(
+                            child: Text(
+                              'Shop Details',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .headlineSmall
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color:
+                                        Theme.of(context).colorScheme.primary,
+                                  ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          _buildShopDetails(context),
+                          // Add detailed rows for address, category, and contact
+                        ],
+                      ),
+                    ),
+
+                    // Divider separating details and action buttons
+                    Divider(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurface
+                            .withOpacity(0.2)),
+
+                    // Action Buttons Section
+                    Padding(
+                      padding: const EdgeInsets.only(top: 12.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: () => _makePhoneCall(shop.phoneNumber),
+                              icon:
+                                  const Icon(Icons.phone, color: Colors.white),
+                              label: const Text(
+                                'Call',
+                                style: TextStyle(color: Colors.white),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor:
+                                    Theme.of(context).colorScheme.primary,
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: () => _showLocation(shop.address),
+                              icon: const Icon(
+                                Icons.location_on,
+                                color: Colors.white,
+                              ),
+                              label: const Text(
+                                'Location',
+                                style: TextStyle(color: Colors.white),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor:
+                                    Theme.of(context).colorScheme.secondary,
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
             const SizedBox(height: 24),
             _buildProductsSectionTitle(context),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
             _buildSearchBar(shopController, context),
             const SizedBox(height: 16),
             _buildProductList(shopController, context),
@@ -49,76 +148,112 @@ class ShopDetailsView extends StatelessWidget {
   // AppBar with Reload Button
   AppBar _buildAppBar(BuildContext context, ShopController shopController) {
     return AppBar(
-      title:
-          Text(shop.shopName, style: Theme.of(context).textTheme.headlineLarge),
+      title: Text(
+        shop.shopName,
+        style: Theme.of(context).textTheme.headlineLarge,
+      ),
       centerTitle: true,
       backgroundColor: Theme.of(context).colorScheme.secondary,
       elevation: 0,
     );
   }
 
-  // Shop Details Card
-  Widget _buildShopDetailsCard(BuildContext context) {
-    return Card(
-      elevation: 8,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Text(
-                shop.shopName,
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            _buildShopDetailRow(context, 'Address: ${shop.address}',
-                icon: Icons.location_on,
-                iconColor: Theme.of(context).colorScheme.secondary),
-            const SizedBox(height: 12),
-            _buildShopDetailRow(context, 'Phone: ${shop.phoneNumber}',
-                icon: Icons.phone,
-                iconColor: Theme.of(context).colorScheme.primary),
-            const SizedBox(height: 12),
-            _buildShopDetailRow(
-                context, 'Categories: ${shop.categories.join(", ")}',
-                icon: Icons.category,
-                iconColor: Theme.of(context).colorScheme.secondary),
-          ],
+// Shop details section with address, categories, and contact number
+  Widget _buildShopDetails(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildDetailRow(
+          context,
+          label: 'Address:',
+          value: shop.address,
+          icon: Icons.location_on,
+          iconColor: Theme.of(context).colorScheme.primary,
         ),
-      ),
+        const SizedBox(height: 16),
+        _buildDetailRow(
+          context,
+          label: 'Categories:',
+          value: shop.categories.join(", "),
+          icon: Icons.category,
+          iconColor: Theme.of(context).colorScheme.primary,
+        ),
+        const SizedBox(height: 16),
+        _buildDetailRow(
+          context,
+          label: 'Phone:',
+          value: shop.phoneNumber,
+          icon: Icons.phone,
+          iconColor: Theme.of(context).colorScheme.primary,
+        ),
+      ],
     );
   }
 
-  // Shop Detail Row
-  Widget _buildShopDetailRow(BuildContext context, String text,
-      {IconData? icon, Color? iconColor}) {
+  // Shop detail row for individual details
+  Widget _buildDetailRow(
+    BuildContext context, {
+    required String label,
+    required String value,
+    required IconData icon,
+    required Color iconColor,
+  }) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (icon != null)
-          Icon(icon,
-              size: 20,
-              color: iconColor ?? Theme.of(context).colorScheme.onSurface),
+        Icon(icon, size: 24, color: iconColor),
         const SizedBox(width: 12),
         Expanded(
-          child: Text(
-            text,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w400,
-                  fontSize: FontSize.body,
+          child: RichText(
+            text: TextSpan(
+              text: '$label ',
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+              children: [
+                TextSpan(
+                  text: value,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w400,
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurface
+                            .withOpacity(0.8),
+                      ),
                 ),
+              ],
+            ),
           ),
         ),
       ],
     );
+  }
+
+  // Make phone call with url_launcher
+  Future<void> _makePhoneCall(String phoneNumber) async {
+    final Uri launchUri = Uri(
+      scheme: 'tel',
+      path: phoneNumber,
+    );
+    if (await canLaunchUrl(launchUri)) {
+      await launchUrl(launchUri);
+    } else {
+      // print('Could not launch $phoneNumber');
+      throw 'Could not launch $phoneNumber';
+    }
+  }
+
+  // Show location (this method is a placeholder for actual map functionality)
+  Future<void> _showLocation(String address) async {
+    final Uri googleMapsUrl =
+        Uri.parse('https://www.google.com/maps/search/?api=1&query=$address');
+    if (await canLaunchUrl(googleMapsUrl)) {
+      await launchUrl(googleMapsUrl);
+    } else {
+      // print('Could not open Google Maps');
+      throw 'Could not open Google Maps';
+    }
   }
 
   // Search Bar

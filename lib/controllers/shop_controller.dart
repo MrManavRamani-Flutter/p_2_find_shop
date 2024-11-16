@@ -22,17 +22,61 @@ class ShopController extends GetxController {
   void loadShops() {
     shopList.value = [
       // Dummy Shop Data - Uncomment and add shop/product details here
-      // Shop(
-      //   shopId: 1,
-      //   shopName: 'Sample Shop',
-      //   address: 'Sample Address',
-      //   phoneNumber: '1234567890',
-      //   categories: ['Category1', 'Category2'],
-      //   products: [
-      //     Product(productName: 'Product 1', price: 100.0, imageUrl: 'path/to/image'),
-      //     Product(productName: 'Product 2', price: 200.0, imageUrl: 'path/to/image'),
-      //   ],
-      // ),
+      Shop(
+        shopId: 1,
+        shopName: 'Palav Matching',
+        address: 'palav matching, moti chock, jasdan - 360050',
+        phoneNumber: '7096584269',
+        categories: ['Blows', 'ashtar', 'dress cloth material', 'chaniya'],
+        products: [
+          // Product(productName: 'Product 1', price: 100.0, imageUrl: 'path/to/image'),
+          // Product(productName: 'Product 2', price: 200.0, imageUrl: 'path/to/image'),
+        ],
+      ),
+      Shop(
+        shopId: 2,
+        shopName: 'Dharti Computer',
+        address: 'dharti computer, chitaliya Road, jasdan - 360050',
+        phoneNumber: '7096584269',
+        categories: ['Electronic', 'Laptop', 'repair'],
+        products: [
+          // Product(productName: 'Product 1', price: 100.0, imageUrl: 'path/to/image'),
+          // Product(productName: 'Product 2', price: 200.0, imageUrl: 'path/to/image'),
+        ],
+      ),
+      Shop(
+        shopId: 3,
+        shopName: 'Hari Om General Store',
+        address: 'hari om general store, bhadwadi, jasdan - 360050',
+        phoneNumber: '7096584269',
+        categories: ['General Store', 'wafer', 'cake'],
+        products: [
+          // Product(productName: 'Product 1', price: 100.0, imageUrl: 'path/to/image'),
+          // Product(productName: 'Product 2', price: 200.0, imageUrl: 'path/to/image'),
+        ],
+      ),
+      Shop(
+        shopId: 4,
+        shopName: 'Shyam Kunj hall',
+        address: 'shyam kunj hall, chitaliya road, jasdan - 360050',
+        phoneNumber: '7096584269',
+        categories: ['functions', 'wedding hall', 'book hall for functions'],
+        products: [
+          // Product(productName: 'Product 1', price: 100.0, imageUrl: 'path/to/image'),
+          // Product(productName: 'Product 2', price: 200.0, imageUrl: 'path/to/image'),
+        ],
+      ),
+      Shop(
+        shopId: 5,
+        shopName: 'Angel English Academy',
+        address: 'Angel English Academy, new bus stand, jasdan - 360050',
+        phoneNumber: '7096584269',
+        categories: ['Spoken English', 'Classes'],
+        products: [
+          // Product(productName: 'Product 1', price: 100.0, imageUrl: 'path/to/image'),
+          // Product(productName: 'Product 2', price: 200.0, imageUrl: 'path/to/image'),
+        ],
+      ),
     ];
     filteredShops.value = shopList; // Initialize with full shop list
   }
